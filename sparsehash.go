@@ -22,6 +22,7 @@ type Hasher struct {
 	// SubHasher is the actual hash function through which the samples will be hashed (murmur3.New128() for instance)
 	SubHasher func() hash.Hash
 	// Size of the 3 samples to actually hash (at the beginning, middle and end of the input)
+	// A SampleSize of 0 will hash alls inputs entirely
 	SampleSize int64
 	// Minimum size of the input to only hash the 3 samples (smaller inputs will be hashed entirely)
 	SizeThreshold int64
@@ -62,9 +63,42 @@ func (h Hasher) SumFile(filename string) ([HashSize]byte, error) {
 
 // Sum hashes a SectionReader using the sparsehash parameters.
 func (h Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
+	var hasher hash.Hash
+	var err error
+
+	if f.Size() < h.SizeThreshold || h.SampleSize < 1 {
+		hasher, err = h.hashAll(f)
+	} else {
+		hasher, err = h.hashSamples(f)
+	}
+	hash := make([]byte, 0, HashSize)
+	hash = hasher.Sum(hash)
+
+	binary.PutUvarint(hash, uint64(f.Size()))
+
+	var result [HashSize]byte
+	copy(result[:], hash)
+	return result, err
+}
+
+func (h Hasher) hashAll(f *io.SectionReader) (hash.Hash, error) {
+	hasher := h.SubHasher()
+	_, err := io.Copy(hasher, f)
+	return hasher, err
+}
+
+func (h Hasher) hashSamples(f *io.SectionReader) (hash.Hash, error) {
 	var err error
 
 	// The following functions do nothing if err != nil
+	hasher := h.SubHasher()
+	hWrite := func(p []byte) {
+		if err != nil {
+			return
+		}
+		_, err = hasher.Write(p)
+	}
+
 	fRead := func(p []byte) {
 		if err != nil {
 			return
@@ -81,36 +115,15 @@ func (h Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
 		_, err = f.Seek(offset, whence)
 	}
 
-	hasher := h.SubHasher()
-	hWrite := func(p []byte) {
-		if err != nil {
-			return
-		}
-		_, err = hasher.Write(p)
-	}
+	buffer := make([]byte, h.SampleSize)
+	fRead(buffer)
+	hWrite(buffer)
+	fSeek(f.Size()/2, 0)
+	fRead(buffer)
+	hWrite(buffer)
+	fSeek(-h.SampleSize, 2)
+	fRead(buffer)
+	hWrite(buffer)
 
-	if f.Size() < h.SizeThreshold || h.SampleSize < 1 {
-		buffer := make([]byte, f.Size())
-		fRead(buffer)
-		hWrite(buffer)
-	} else {
-		buffer := make([]byte, h.SampleSize)
-		fRead(buffer)
-		hWrite(buffer)
-		fSeek(f.Size()/2, 0)
-		fRead(buffer)
-		hWrite(buffer)
-		fSeek(-h.SampleSize, 2)
-		fRead(buffer)
-		hWrite(buffer)
-	}
-
-	r := make([]byte, 0, HashSize)
-	hash := hasher.Sum(r)
-
-	binary.PutUvarint(hash, uint64(f.Size()))
-
-	var result [HashSize]byte
-	copy(result[:], hash)
-	return result, err
+	return hasher, err
 }
