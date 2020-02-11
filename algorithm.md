@@ -67,7 +67,7 @@ array will replace the highest-order bytes of h.
 h = concat(v, h'[len(v):])
 ```
 
-h is the final imosum hash.
+h is the final sparsehash.
 
 ## Default parameters
 

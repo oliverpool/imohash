@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kalafut/sparsehash"
+	"github.com/oliverpool/sparsehash"
 	"github.com/spaolacci/murmur3"
 )
 

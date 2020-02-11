@@ -1,7 +1,7 @@
 // Package sparsehash implements a fast, constant-time hash for files. It is based atop
 // murmurhash3 and uses file size and sample data to construct the hash.
 //
-// For more information, including important caveats on usage, consult https://github.com/kalafut/sparsehash.
+// For more information, including important caveats on usage, consult https://github.com/oliverpool/sparsehash.
 package sparsehash
 
 import (

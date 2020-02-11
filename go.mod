@@ -1,4 +1,4 @@
-module github.com/kalafut/sparsehash
+module github.com/oliverpool/sparsehash
 
 require (
 	github.com/pkg/profile v1.4.0

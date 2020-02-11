@@ -3,16 +3,16 @@
 sparsehash is a fast, constant-time hashing library for Go. It uses file size and
 sampling to calculate hashes quickly, regardless of file size.
 
-[imosum](https://github.com/kalafut/sparsehash/blob/master/cmd/imosum/main.go) is
+[sparsehash](https://github.com/oliverpool/sparsehash/blob/master/cmd/sparsehash/main.go) is
 a sample application to hash files from the command line, similar to md5sum.
 
-sparsehash is also available as [a Python library](https://github.com/kalafut/py-sparsehash).
+sparsehash is forked from [imohash](https://github.com/kalafut/imohash).
 
 ## Installation
 
-`go get github.com/kalafut/sparsehash/...`
+`go get github.com/oliverpool/sparsehash/...`
 
-The API is described in the [package documentation](https://godoc.org/github.com/kalafut/sparsehash).
+The API is described in the [package documentation](https://pkg.go.dev/github.com/oliverpool/sparsehash).
 
 ## Uses
 
@@ -36,7 +36,7 @@ for:
 ## Design
 
 (Note: a more precise description is provided in the
-[algorithm description](https://github.com/kalafut/sparsehash/blob/master/algorithm.md).)
+[algorithm description](https://github.com/oliverpool/sparsehash/blob/master/algorithm.md).)
 
 sparsehash works by hashing small chunks of data from the beginning, middle and
 end of a file. It also incorporates the file size into the final 128-bit hash.
@@ -73,6 +73,7 @@ expect huge speedups. (**spoiler**: reading 48K is quicker than reading 500MB.)
 Inspired by [ILS marker beacons](https://en.wikipedia.org/wiki/Marker_beacon).
 
 ## Credits
+*  [imohash](https://github.com/kalafut/imohash) project, from which this module is a fork
 * The "sparseFingerprints" used in [TMSU](https://github.com/oniony/TMSU) gave me
 some confidence in this approach to hashing.
 * Sébastien Paolacci's [murmur3](https://github.com/spaolacci/murmur3) library does
