@@ -40,7 +40,7 @@ func TestCustom(t *testing.T) {
 	sampleThreshold := 45
 	imo := Hasher{
 		SubHasher:     newMurmur3,
-		SampleSize:    sampleSize,
+		SampleSize:    int64(sampleSize),
 		SizeThreshold: int64(sampleThreshold),
 	}
 

@@ -21,7 +21,7 @@ var emptyArray = [HashSize]byte{}
 type Hasher struct {
 	SubHasher func() hash.Hash
 	// 3 samples of SampleSize will be hashed (at the beginning, middle and end of the input file)
-	SampleSize int
+	SampleSize int64
 	// Files smaller than SizeThreshold will be hashed in their entirety.
 	SizeThreshold int64
 }
@@ -37,14 +37,14 @@ func New(subhasher func() hash.Hash) Hasher {
 }
 
 // SumBytes hashes a byte slice using the sparsehash parameters.
-func (imo *Hasher) SumBytes(data []byte) [HashSize]byte {
+func (h *Hasher) SumBytes(data []byte) [HashSize]byte {
 	sr := io.NewSectionReader(bytes.NewReader(data), 0, int64(len(data)))
 
-	return imo.Sum(sr)
+	return h.Sum(sr)
 }
 
 // SumFile hashes a file sparsely
-func (imo *Hasher) SumFile(filename string) ([HashSize]byte, error) {
+func (h *Hasher) SumFile(filename string) ([HashSize]byte, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return emptyArray, err
@@ -56,27 +56,25 @@ func (imo *Hasher) SumFile(filename string) ([HashSize]byte, error) {
 		return emptyArray, err
 	}
 	sr := io.NewSectionReader(f, 0, fi.Size())
-	return imo.Sum(sr), nil
+	return h.Sum(sr), nil
 }
 
 // Sum hashes a SectionReader using the sparsehash parameters.
-func (imo *Hasher) Sum(f *io.SectionReader) [HashSize]byte {
-	var result [HashSize]byte
+func (h *Hasher) Sum(f *io.SectionReader) [HashSize]byte {
+	hasher := h.SubHasher()
 
-	hasher := imo.SubHasher()
-
-	if f.Size() < imo.SizeThreshold || imo.SampleSize < 1 {
+	if f.Size() < h.SizeThreshold || h.SampleSize < 1 {
 		buffer := make([]byte, f.Size())
 		f.Read(buffer)
 		hasher.Write(buffer)
 	} else {
-		buffer := make([]byte, imo.SampleSize)
+		buffer := make([]byte, h.SampleSize)
 		f.Read(buffer)
 		hasher.Write(buffer)
-		f.Seek(f.Size()/2, 0)
+		f.Seek((f.Size())/2, 0)
 		f.Read(buffer)
 		hasher.Write(buffer)
-		f.Seek(int64(-imo.SampleSize), 2)
+		f.Seek(-h.SampleSize, 2)
 		f.Read(buffer)
 		hasher.Write(buffer)
 	}
@@ -85,7 +83,8 @@ func (imo *Hasher) Sum(f *io.SectionReader) [HashSize]byte {
 	hash := hasher.Sum(r)
 
 	binary.PutUvarint(hash, uint64(f.Size()))
-	copy(result[:], hash)
 
+	var result [HashSize]byte
+	copy(result[:], hash)
 	return result
 }

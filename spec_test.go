@@ -13,7 +13,7 @@ func TestSpec(t *testing.T) {
 	is := is.New(t)
 
 	tests := []struct {
-		s    int
+		s    int64
 		t    int64
 		n    int
 		hash string
