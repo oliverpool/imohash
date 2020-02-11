@@ -96,7 +96,7 @@ func (h *Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
 		buffer := make([]byte, h.SampleSize)
 		fRead(buffer)
 		hWrite(buffer)
-		fSeek((f.Size())/2, 0)
+		fSeek(f.Size()/2, 0)
 		fRead(buffer)
 		hWrite(buffer)
 		fSeek(-h.SampleSize, 2)

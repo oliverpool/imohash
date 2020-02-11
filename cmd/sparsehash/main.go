@@ -1,9 +1,8 @@
-// imosum is a sample application using sparsehash. It will calculate and report
+// sparsehash is a sample application using sparsehash. It will calculate and report
 // file hashes in a format similar to md5sum, etc.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"hash"
 	"log"
@@ -18,12 +17,11 @@ func newMurmur3() hash.Hash {
 }
 
 func main() {
-	flag.Parse()
-	files := flag.Args()
+	files := os.Args[1:]
 
 	if len(files) == 0 {
-		fmt.Println("imosum filenames")
-		os.Exit(0)
+		fmt.Println("Usage: sparsehash [filenames]")
+		return
 	}
 
 	h := sparsehash.New(newMurmur3)
