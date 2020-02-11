@@ -3,10 +3,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"hash"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/kalafut/sparsehash"
 	"github.com/spaolacci/murmur3"
@@ -17,7 +19,9 @@ func newMurmur3() hash.Hash {
 }
 
 func main() {
-	files := os.Args[1:]
+	// defer profile.Start(profile.MemProfile).Stop()
+	flag.Parse()
+	files := flag.Args()
 
 	if len(files) == 0 {
 		fmt.Println("Usage: sparsehash [filenames]")
@@ -26,10 +30,23 @@ func main() {
 
 	h := sparsehash.New(newMurmur3)
 	for _, file := range files {
-		hash, err := h.SumFile(file)
+		err := filepath.Walk(file, func(path string, f os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if f.IsDir() {
+				return nil
+			}
+
+			hash, err := h.SumFile(path)
+			if err != nil {
+				return err
+			}
+			_, err = fmt.Printf("%016x  %s\n", hash, path)
+			return err
+		})
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%016x  %s\n", hash, file)
 	}
 }
