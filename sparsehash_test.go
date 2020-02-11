@@ -19,20 +19,6 @@ func newMurmur3() hash.Hash {
 
 var tempDir string
 
-func Example() {
-	hasher := New(func() hash.Hash {
-		// From github.com/spaolacci/murmur3
-		// can be anything implementing the hash.Hash interface
-		return murmur3.New128()
-	})
-	hash, err := hasher.SumFile("Makefile")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("%016x\n", hash)
-	// Output: 1acd63930005d0b6ee5ebc8a3f6483f2
-}
-
 func TestMain(m *testing.M) {
 	flag.Parse()
 
