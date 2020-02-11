@@ -1,15 +1,15 @@
 ## Introduction
 
-imohash is a file hashing algorithm optimized for large files. It uses
+sparsehash is a file hashing algorithm optimized for large files. It uses
 file size and sampling in hash generation. Because it does not process
 the whole file, it is not a general purpose hashing algorithm. But for
-applications where a hash sample is sufficient, imohash will provide a
+applications where a hash sample is sufficient, sparsehash will provide a
 high performance hashing, especially for large files over slow
 networks.
 
 ## Algorithm
 
-imohash generates a 128-bit hash from a fixed length message or file.
+sparsehash generates a 128-bit hash from a fixed length message or file.
 This is done in two phases:
 
 1. hash calculation
@@ -17,7 +17,7 @@ This is done in two phases:
 
 ### Parameters and mode
 
-imohash takes two parameters, as well as the message length:
+sparsehash takes two parameters, as well as the message length:
 
 * sample size (s)
 * sampling threshold (t)
@@ -71,7 +71,7 @@ h is the final imosum hash.
 
 ## Default parameters
 
-The default imohash parameters are:
+The default sparsehash parameters are:
 
 s = 16384
 t = 131072
@@ -104,7 +104,7 @@ M(n):
 // M(1000000) == ... 197c74f51423765786516442fd1c9832
 ```
 
-Test vectors for imohash of M length n using sample size s and sample
+Test vectors for sparsehash of M length n using sample size s and sample
 threshold t.
 
 ```

@@ -1,32 +1,32 @@
-# imohash
+# sparsehash
 
-imohash is a fast, constant-time hashing library for Go. It uses file size and
+sparsehash is a fast, constant-time hashing library for Go. It uses file size and
 sampling to calculate hashes quickly, regardless of file size.
 
-[imosum](https://github.com/kalafut/imohash/blob/master/cmd/imosum/main.go) is
+[imosum](https://github.com/kalafut/sparsehash/blob/master/cmd/imosum/main.go) is
 a sample application to hash files from the command line, similar to md5sum.
 
-imohash is also available as [a Python library](https://github.com/kalafut/py-imohash).
+sparsehash is also available as [a Python library](https://github.com/kalafut/py-sparsehash).
 
 ## Installation
 
-`go get github.com/kalafut/imohash/...`
+`go get github.com/kalafut/sparsehash/...`
 
-The API is described in the [package documentation](https://godoc.org/github.com/kalafut/imohash).
+The API is described in the [package documentation](https://godoc.org/github.com/kalafut/sparsehash).
 
 ## Uses
 
-Because imohash only reads a small portion of a file's data, it is very fast and
+Because sparsehash only reads a small portion of a file's data, it is very fast and
 well suited to file synchronization and deduplication, especially over a fairly
 slow network. A need to manage media (photos and video) over Wi-Fi between a NAS
 and multiple family computers is how the library was born.
 
 If you just need to check whether two files are the same, and understand the
-limitations that sampling imposes (see below), imohash may be a good fit.
+limitations that sampling imposes (see below), sparsehash may be a good fit.
 
 ## Misuses
 
-Because imohash only reads a small portion of a file's data, it is not suitable
+Because sparsehash only reads a small portion of a file's data, it is not suitable
 for:
 
 - file verification or integrity monitoring
@@ -36,9 +36,9 @@ for:
 ## Design
 
 (Note: a more precise description is provided in the
-[algorithm description](https://github.com/kalafut/imohash/blob/master/algorithm.md).)
+[algorithm description](https://github.com/kalafut/sparsehash/blob/master/algorithm.md).)
 
-imohash works by hashing small chunks of data from the beginning, middle and
+sparsehash works by hashing small chunks of data from the beginning, middle and
 end of a file. It also incorporates the file size into the final 128-bit hash.
 This approach is based on a few assumptions which will vary by application.
 First, file size alone *tends*<sup>1</sup> to be a pretty good differentiator, especially
@@ -60,11 +60,11 @@ sample size can be changed for your application.
 ### Small file exemption
 Small files are more likely to collide on size than large ones. They're also
 probably more likely to change in subtle ways that sampling will miss (e.g.
-editing a large text file). For this reason, imohash will simply hash the entire
+editing a large text file). For this reason, sparsehash will simply hash the entire
 file if it is less than 128K. This parameter is also configurable.
 
 ## Performance
-The standard hash performance metrics make no sense for imohash since it's only
+The standard hash performance metrics make no sense for sparsehash since it's only
 reading a limited set of the data. That said, the real-world performance is
 very good. If you are working with large files and/or a slow network,
 expect huge speedups. (**spoiler**: reading 48K is quicker than reading 500MB.)

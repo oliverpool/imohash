@@ -1,4 +1,4 @@
-package imohash
+package sparsehash
 
 import (
 	"crypto/md5"
@@ -38,7 +38,7 @@ func TestSpec(t *testing.T) {
 }
 
 // M generates n bytes of pseudo-random data according to the
-// method described in the imohash algorithm description.
+// method described in the sparsehash algorithm description.
 func M(n int) []byte {
 	r := make([]byte, 0, n)
 	hasher := md5.New()

@@ -1,4 +1,4 @@
-package imohash
+package sparsehash
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 
 func TestCustom(t *testing.T) {
 	const sampleFile = "sample"
-	var hash [Size]byte
+	var hash [HashSize]byte
 	var err error
 
 	is := is.New(t)
@@ -38,7 +38,7 @@ func TestCustom(t *testing.T) {
 	ioutil.WriteFile(sampleFile, []byte{}, 0666)
 	hash, err = imo.SumFile(sampleFile)
 	is.NotErr(err)
-	is.Equal(hash, [Size]byte{})
+	is.Equal(hash, [HashSize]byte{})
 
 	// small file
 	ioutil.WriteFile(sampleFile, []byte("hello"), 0666)
@@ -117,7 +117,7 @@ func TestCustom(t *testing.T) {
 // functions using the spec defaults.
 func TestDefault(t *testing.T) {
 	const sampleFile = "sample"
-	var h1, h2 [Size]byte
+	var h1, h2 [HashSize]byte
 	var testData []byte
 
 	is := is.New(t)
