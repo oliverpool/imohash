@@ -33,9 +33,9 @@ func TestCustom(t *testing.T) {
 	sampleSize := 3
 	sampleThreshold := 45
 	imo := Hasher{
-		SubHasher:       newMurmur3,
-		sampleSize:      sampleSize,
-		sampleThreshold: sampleThreshold,
+		SubHasher:     newMurmur3,
+		SampleSize:    sampleSize,
+		SizeThreshold: sampleThreshold,
 	}
 
 	// empty file
@@ -108,9 +108,9 @@ func TestCustom(t *testing.T) {
 
 	// test sampleSize < 1
 	imo = Hasher{
-		SubHasher:       newMurmur3,
-		sampleSize:      0,
-		sampleThreshold: size,
+		SubHasher:     newMurmur3,
+		SampleSize:    0,
+		SizeThreshold: size,
 	}
 	data = bytes.Repeat([]byte{'A'}, size)
 	ioutil.WriteFile(sampleFile, data, 0666)
@@ -118,30 +118,5 @@ func TestCustom(t *testing.T) {
 	hashStr = fmt.Sprintf("%x", hash)
 	is.Equal(hashStr, "2d9123b54d37e9b8f94ab37a7eca6f40")
 
-	os.Remove(sampleFile)
-}
-
-// Test that the top level functions are the same as custom
-// functions using the spec defaults.
-func TestDefault(t *testing.T) {
-	const sampleFile = "sample"
-	var h1, h2 [HashSize]byte
-	var testData []byte
-
-	is := is.New(t)
-
-	for _, size := range []int{100, 131071, 131072, 50000} {
-		imo := Hasher{
-			SubHasher:       newMurmur3,
-			sampleSize:      16384,
-			sampleThreshold: 131072,
-		}
-		testData = M(size)
-		is.Equal(Sum(testData), imo.Sum(testData))
-		ioutil.WriteFile(sampleFile, []byte{}, 0666)
-		h1, _ = SumFile(sampleFile)
-		h2, _ = imo.SumFile(sampleFile)
-		is.Equal(h1, h2)
-	}
 	os.Remove(sampleFile)
 }

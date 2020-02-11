@@ -22,11 +22,11 @@ var emptyArray = [HashSize]byte{}
 
 // Hasher respresents a sparse hasher
 type Hasher struct {
-	SubHasher  func() hash.Hash
-	sampleSize int
-	// Files smaller than sampleThreshold this will be hashed in their entirety.
-	sampleThreshold int
-	bytesAdded      int
+	SubHasher func() hash.Hash
+	// 3 samples of SampleSize will be hashed (at the beginning, middle and end of the input file)
+	SampleSize int
+	// Files smaller than SizeThreshold will be hashed in their entirety.
+	SizeThreshold int
 }
 
 func newMurmur3() hash.Hash {
@@ -37,22 +37,10 @@ func newMurmur3() hash.Hash {
 // and 128K as threshhold values.
 func New() Hasher {
 	return Hasher{
-		SubHasher:       newMurmur3,
-		sampleSize:      16 * 1024,
-		sampleThreshold: 128 * 1024,
+		SubHasher:     newMurmur3,
+		SampleSize:    16 * 1024,
+		SizeThreshold: 128 * 1024,
 	}
-}
-
-// SumFile hashes a file using default sample parameters.
-func SumFile(filename string) ([HashSize]byte, error) {
-	imo := New()
-	return imo.SumFile(filename)
-}
-
-// Sum hashes a byte slice using default sample parameters.
-func Sum(data []byte) [HashSize]byte {
-	imo := New()
-	return imo.Sum(data)
 }
 
 // Sum hashes a byte slice using the sparsehash parameters.
@@ -85,18 +73,18 @@ func (imo *Hasher) hashCore(f *io.SectionReader) [HashSize]byte {
 
 	hasher := imo.SubHasher()
 
-	if f.Size() < int64(imo.sampleThreshold) || imo.sampleSize < 1 {
+	if f.Size() < int64(imo.SizeThreshold) || imo.SampleSize < 1 {
 		buffer := make([]byte, f.Size())
 		f.Read(buffer)
 		hasher.Write(buffer)
 	} else {
-		buffer := make([]byte, imo.sampleSize)
+		buffer := make([]byte, imo.SampleSize)
 		f.Read(buffer)
 		hasher.Write(buffer)
 		f.Seek(f.Size()/2, 0)
 		f.Read(buffer)
 		hasher.Write(buffer)
-		f.Seek(int64(-imo.sampleSize), 2)
+		f.Seek(int64(-imo.SampleSize), 2)
 		f.Read(buffer)
 		hasher.Write(buffer)
 	}

@@ -32,9 +32,9 @@ func TestSpec(t *testing.T) {
 
 	for _, test := range tests {
 		i := Hasher{
-			SubHasher:       newMurmur3,
-			sampleSize:      test.s,
-			sampleThreshold: test.t,
+			SubHasher:     newMurmur3,
+			SampleSize:    test.s,
+			SizeThreshold: test.t,
 		}
 		hashStr = fmt.Sprintf("%x", i.Sum(M(test.n)))
 		is.Equal(hashStr, test.hash)

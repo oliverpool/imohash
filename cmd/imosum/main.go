@@ -20,8 +20,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	h := sparsehash.New()
 	for _, file := range files {
-		hash, err := sparsehash.SumFile(file)
+		hash, err := h.SumFile(file)
 		if err != nil {
 			log.Fatal(err)
 		}
