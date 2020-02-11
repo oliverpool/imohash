@@ -32,7 +32,11 @@ func TestCustom(t *testing.T) {
 
 	sampleSize := 3
 	sampleThreshold := 45
-	imo := NewCustom(sampleSize, sampleThreshold)
+	imo := Hasher{
+		SubHasher:       newMurmur3,
+		sampleSize:      sampleSize,
+		sampleThreshold: sampleThreshold,
+	}
 
 	// empty file
 	ioutil.WriteFile(sampleFile, []byte{}, 0666)
@@ -103,7 +107,11 @@ func TestCustom(t *testing.T) {
 	is.NotEqual(h6, h7)
 
 	// test sampleSize < 1
-	imo = NewCustom(0, size)
+	imo = Hasher{
+		SubHasher:       newMurmur3,
+		sampleSize:      0,
+		sampleThreshold: size,
+	}
 	data = bytes.Repeat([]byte{'A'}, size)
 	ioutil.WriteFile(sampleFile, data, 0666)
 	hash, _ = imo.SumFile(sampleFile)
@@ -123,7 +131,11 @@ func TestDefault(t *testing.T) {
 	is := is.New(t)
 
 	for _, size := range []int{100, 131071, 131072, 50000} {
-		imo := NewCustom(16384, 131072)
+		imo := Hasher{
+			SubHasher:       newMurmur3,
+			sampleSize:      16384,
+			sampleThreshold: 131072,
+		}
 		testData = M(size)
 		is.Equal(Sum(testData), imo.Sum(testData))
 		ioutil.WriteFile(sampleFile, []byte{}, 0666)

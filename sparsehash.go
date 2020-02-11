@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"hash"
 	"io"
 	"os"
 
@@ -17,36 +18,29 @@ import (
 // HashSize is the size of the resulting array
 const HashSize = 16
 
-// Files smaller than this will be hashed in their entirety.
-const SampleThreshold = 128 * 1024
-const SampleSize = 16 * 1024
-
 var emptyArray = [HashSize]byte{}
 
-type sparsehash struct {
-	hasher          murmur3.Hash128
-	sampleSize      int
+// Hasher respresents a sparse hasher
+type Hasher struct {
+	SubHasher  func() hash.Hash
+	sampleSize int
+	// Files smaller than sampleThreshold this will be hashed in their entirety.
 	sampleThreshold int
 	bytesAdded      int
 }
 
-// New returns a new sparsehash using the default sample size
-// and sample threshhold values.
-func New() sparsehash {
-	return NewCustom(SampleSize, SampleThreshold)
+func newMurmur3() hash.Hash {
+	return murmur3.New128()
 }
 
-// NewCustom returns a new sparsehash using the provided sample size
-// and sample threshhold values. The entire file will be hashed
-// (i.e. no sampling), if sampleSize < 1.
-func NewCustom(sampleSize, sampleThreshold int) sparsehash {
-	h := sparsehash{
-		hasher:          murmur3.New128(),
-		sampleSize:      sampleSize,
-		sampleThreshold: sampleThreshold,
+// New returns a new sparsehash using murmur3 as hasher, 16K as sample size
+// and 128K as threshhold values.
+func New() Hasher {
+	return Hasher{
+		SubHasher:       newMurmur3,
+		sampleSize:      16 * 1024,
+		sampleThreshold: 128 * 1024,
 	}
-
-	return h
 }
 
 // SumFile hashes a file using default sample parameters.
@@ -62,14 +56,14 @@ func Sum(data []byte) [HashSize]byte {
 }
 
 // Sum hashes a byte slice using the sparsehash parameters.
-func (imo *sparsehash) Sum(data []byte) [HashSize]byte {
+func (imo *Hasher) Sum(data []byte) [HashSize]byte {
 	sr := io.NewSectionReader(bytes.NewReader(data), 0, int64(len(data)))
 
 	return imo.hashCore(sr)
 }
 
 // SumFile hashes a file using using the sparsehash parameters.
-func (imo *sparsehash) SumFile(filename string) ([HashSize]byte, error) {
+func (imo *Hasher) SumFile(filename string) ([HashSize]byte, error) {
 	f, err := os.Open(filename)
 	defer f.Close()
 
@@ -86,28 +80,28 @@ func (imo *sparsehash) SumFile(filename string) ([HashSize]byte, error) {
 }
 
 // hashCore hashes a SectionReader using the sparsehash parameters.
-func (imo *sparsehash) hashCore(f *io.SectionReader) [HashSize]byte {
+func (imo *Hasher) hashCore(f *io.SectionReader) [HashSize]byte {
 	var result [HashSize]byte
 
-	imo.hasher.Reset()
+	hasher := imo.SubHasher()
 
 	if f.Size() < int64(imo.sampleThreshold) || imo.sampleSize < 1 {
 		buffer := make([]byte, f.Size())
 		f.Read(buffer)
-		imo.hasher.Write(buffer)
+		hasher.Write(buffer)
 	} else {
 		buffer := make([]byte, imo.sampleSize)
 		f.Read(buffer)
-		imo.hasher.Write(buffer)
+		hasher.Write(buffer)
 		f.Seek(f.Size()/2, 0)
 		f.Read(buffer)
-		imo.hasher.Write(buffer)
+		hasher.Write(buffer)
 		f.Seek(int64(-imo.sampleSize), 2)
 		f.Read(buffer)
-		imo.hasher.Write(buffer)
+		hasher.Write(buffer)
 	}
 
-	hash := imo.hasher.Sum(nil)
+	hash := hasher.Sum(nil)
 	fmt.Println(len(hash), hash)
 
 	binary.PutUvarint(hash, uint64(f.Size()))
