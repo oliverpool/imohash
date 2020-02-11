@@ -7,7 +7,6 @@ package sparsehash
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"hash"
 	"io"
 	"os"
@@ -26,7 +25,7 @@ type Hasher struct {
 	// 3 samples of SampleSize will be hashed (at the beginning, middle and end of the input file)
 	SampleSize int
 	// Files smaller than SizeThreshold will be hashed in their entirety.
-	SizeThreshold int
+	SizeThreshold int64
 }
 
 func newMurmur3() hash.Hash {
@@ -43,37 +42,36 @@ func New() Hasher {
 	}
 }
 
-// Sum hashes a byte slice using the sparsehash parameters.
-func (imo *Hasher) Sum(data []byte) [HashSize]byte {
+// SumBytes hashes a byte slice using the sparsehash parameters.
+func (imo *Hasher) SumBytes(data []byte) [HashSize]byte {
 	sr := io.NewSectionReader(bytes.NewReader(data), 0, int64(len(data)))
 
-	return imo.hashCore(sr)
+	return imo.Sum(sr)
 }
 
-// SumFile hashes a file using using the sparsehash parameters.
+// SumFile hashes a file sparsely
 func (imo *Hasher) SumFile(filename string) ([HashSize]byte, error) {
 	f, err := os.Open(filename)
-	defer f.Close()
-
 	if err != nil {
 		return emptyArray, err
 	}
+	defer f.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
 		return emptyArray, err
 	}
 	sr := io.NewSectionReader(f, 0, fi.Size())
-	return imo.hashCore(sr), nil
+	return imo.Sum(sr), nil
 }
 
-// hashCore hashes a SectionReader using the sparsehash parameters.
-func (imo *Hasher) hashCore(f *io.SectionReader) [HashSize]byte {
+// Sum hashes a SectionReader using the sparsehash parameters.
+func (imo *Hasher) Sum(f *io.SectionReader) [HashSize]byte {
 	var result [HashSize]byte
 
 	hasher := imo.SubHasher()
 
-	if f.Size() < int64(imo.SizeThreshold) || imo.SampleSize < 1 {
+	if f.Size() < imo.SizeThreshold || imo.SampleSize < 1 {
 		buffer := make([]byte, f.Size())
 		f.Read(buffer)
 		hasher.Write(buffer)
@@ -89,11 +87,10 @@ func (imo *Hasher) hashCore(f *io.SectionReader) [HashSize]byte {
 		hasher.Write(buffer)
 	}
 
-	hash := hasher.Sum(nil)
-	fmt.Println(len(hash), hash)
+	r := make([]byte, 0, HashSize)
+	hash := hasher.Sum(r)
 
 	binary.PutUvarint(hash, uint64(f.Size()))
-	fmt.Println("2", len(hash), hash)
 	copy(result[:], hash)
 
 	return result

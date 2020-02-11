@@ -14,7 +14,7 @@ func TestSpec(t *testing.T) {
 
 	tests := []struct {
 		s    int
-		t    int
+		t    int64
 		n    int
 		hash string
 	}{
@@ -36,7 +36,7 @@ func TestSpec(t *testing.T) {
 			SampleSize:    test.s,
 			SizeThreshold: test.t,
 		}
-		hashStr = fmt.Sprintf("%x", i.Sum(M(test.n)))
+		hashStr = fmt.Sprintf("%x", i.SumBytes(M(test.n)))
 		is.Equal(hashStr, test.hash)
 	}
 }

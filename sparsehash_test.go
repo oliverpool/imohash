@@ -35,7 +35,7 @@ func TestCustom(t *testing.T) {
 	imo := Hasher{
 		SubHasher:     newMurmur3,
 		SampleSize:    sampleSize,
-		SizeThreshold: sampleThreshold,
+		SizeThreshold: int64(sampleThreshold),
 	}
 
 	// empty file
@@ -110,7 +110,7 @@ func TestCustom(t *testing.T) {
 	imo = Hasher{
 		SubHasher:     newMurmur3,
 		SampleSize:    0,
-		SizeThreshold: size,
+		SizeThreshold: int64(size),
 	}
 	data = bytes.Repeat([]byte{'A'}, size)
 	ioutil.WriteFile(sampleFile, data, 0666)
