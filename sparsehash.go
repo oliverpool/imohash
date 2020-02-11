@@ -37,7 +37,7 @@ func New(subhasher func() hash.Hash) Hasher {
 }
 
 // SumBytes hashes a byte slice using the sparsehash parameters.
-func (h *Hasher) SumBytes(data []byte) [HashSize]byte {
+func (h *Hasher) SumBytes(data []byte) ([HashSize]byte, error) {
 	sr := io.NewSectionReader(bytes.NewReader(data), 0, int64(len(data)))
 
 	return h.Sum(sr)
@@ -56,27 +56,52 @@ func (h *Hasher) SumFile(filename string) ([HashSize]byte, error) {
 		return emptyArray, err
 	}
 	sr := io.NewSectionReader(f, 0, fi.Size())
-	return h.Sum(sr), nil
+	return h.Sum(sr)
 }
 
 // Sum hashes a SectionReader using the sparsehash parameters.
-func (h *Hasher) Sum(f *io.SectionReader) [HashSize]byte {
+func (h *Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
+	var err error
+
+	// The following functions do nothing if err != nil
+	fRead := func(p []byte) {
+		if err != nil {
+			return
+		}
+		_, err = f.Read(p)
+		if err == io.EOF {
+			err = nil
+		}
+	}
+	fSeek := func(offset int64, whence int) {
+		if err != nil {
+			return
+		}
+		_, err = f.Seek(offset, whence)
+	}
+
 	hasher := h.SubHasher()
+	hWrite := func(p []byte) {
+		if err != nil {
+			return
+		}
+		_, err = hasher.Write(p)
+	}
 
 	if f.Size() < h.SizeThreshold || h.SampleSize < 1 {
 		buffer := make([]byte, f.Size())
-		f.Read(buffer)
-		hasher.Write(buffer)
+		fRead(buffer)
+		hWrite(buffer)
 	} else {
 		buffer := make([]byte, h.SampleSize)
-		f.Read(buffer)
-		hasher.Write(buffer)
-		f.Seek((f.Size())/2, 0)
-		f.Read(buffer)
-		hasher.Write(buffer)
-		f.Seek(-h.SampleSize, 2)
-		f.Read(buffer)
-		hasher.Write(buffer)
+		fRead(buffer)
+		hWrite(buffer)
+		fSeek((f.Size())/2, 0)
+		fRead(buffer)
+		hWrite(buffer)
+		fSeek(-h.SampleSize, 2)
+		fRead(buffer)
+		hWrite(buffer)
 	}
 
 	r := make([]byte, 0, HashSize)
@@ -86,5 +111,5 @@ func (h *Hasher) Sum(f *io.SectionReader) [HashSize]byte {
 
 	var result [HashSize]byte
 	copy(result[:], hash)
-	return result
+	return result, err
 }

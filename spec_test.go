@@ -36,7 +36,8 @@ func TestSpec(t *testing.T) {
 			SampleSize:    test.s,
 			SizeThreshold: test.t,
 		}
-		hashStr = fmt.Sprintf("%x", i.SumBytes(M(test.n)))
+		s, _ := i.SumBytes(M(test.n))
+		hashStr = fmt.Sprintf("%x", s)
 		is.Equal(hashStr, test.hash)
 	}
 }
