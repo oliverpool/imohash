@@ -5,11 +5,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"hash"
 	"log"
 	"os"
 
 	"github.com/kalafut/sparsehash"
+	"github.com/spaolacci/murmur3"
 )
+
+func newMurmur3() hash.Hash {
+	return murmur3.New128()
+}
 
 func main() {
 	flag.Parse()
@@ -20,7 +26,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	h := sparsehash.New()
+	h := sparsehash.New(newMurmur3)
 	for _, file := range files {
 		hash, err := h.SumFile(file)
 		if err != nil {

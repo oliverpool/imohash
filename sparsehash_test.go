@@ -4,12 +4,18 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"hash"
 	"io/ioutil"
 	"os"
 	"testing"
 
+	"github.com/spaolacci/murmur3"
 	"gopkg.in/tylerb/is.v1"
 )
+
+func newMurmur3() hash.Hash {
+	return murmur3.New128()
+}
 
 var tempDir string
 

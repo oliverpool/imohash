@@ -10,8 +10,6 @@ import (
 	"hash"
 	"io"
 	"os"
-
-	"github.com/spaolacci/murmur3"
 )
 
 // HashSize is the size of the resulting array
@@ -28,15 +26,11 @@ type Hasher struct {
 	SizeThreshold int64
 }
 
-func newMurmur3() hash.Hash {
-	return murmur3.New128()
-}
-
-// New returns a new sparsehash using murmur3 as hasher, 16K as sample size
+// New returns a new sparsehash using the specified subhasher as hasher, 16K as sample size
 // and 128K as threshhold values.
-func New() Hasher {
+func New(subhasher func() hash.Hash) Hasher {
 	return Hasher{
-		SubHasher:     newMurmur3,
+		SubHasher:     subhasher,
 		SampleSize:    16 * 1024,
 		SizeThreshold: 128 * 1024,
 	}
