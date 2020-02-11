@@ -1,5 +1,5 @@
-// Package sparsehash implements a fast, constant-time hash for files. It is based atop
-// murmurhash3 and uses file size and sample data to construct the hash.
+// Package sparsehash implements a fast, constant-time hash for files. It hashes three fixed
+// samples of the file (beginning, middle and end) and uses file size to construct the hash.
 //
 // For more information, including important caveats on usage, consult https://github.com/oliverpool/sparsehash.
 package sparsehash
@@ -12,17 +12,18 @@ import (
 	"os"
 )
 
-// HashSize is the size of the resulting array
+// HashSize is the size of byte array produced by the Sum function
 const HashSize = 16
 
 var emptyArray = [HashSize]byte{}
 
 // Hasher respresents a sparse hasher
 type Hasher struct {
+	// SubHasher is the actual hash function through which the samples will be hashed (murmur3.New128() for instance)
 	SubHasher func() hash.Hash
-	// 3 samples of SampleSize will be hashed (at the beginning, middle and end of the input file)
+	// Size of the 3 samples to actually hash (at the beginning, middle and end of the input)
 	SampleSize int64
-	// Files smaller than SizeThreshold will be hashed in their entirety.
+	// Minimum size of the input to only hash the 3 samples (smaller inputs will be hashed entirely)
 	SizeThreshold int64
 }
 
@@ -37,14 +38,14 @@ func New(subhasher func() hash.Hash) Hasher {
 }
 
 // SumBytes hashes a byte slice using the sparsehash parameters.
-func (h *Hasher) SumBytes(data []byte) ([HashSize]byte, error) {
+func (h Hasher) SumBytes(data []byte) ([HashSize]byte, error) {
 	sr := io.NewSectionReader(bytes.NewReader(data), 0, int64(len(data)))
 
 	return h.Sum(sr)
 }
 
 // SumFile hashes a file sparsely
-func (h *Hasher) SumFile(filename string) ([HashSize]byte, error) {
+func (h Hasher) SumFile(filename string) ([HashSize]byte, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return emptyArray, err
@@ -60,7 +61,7 @@ func (h *Hasher) SumFile(filename string) ([HashSize]byte, error) {
 }
 
 // Sum hashes a SectionReader using the sparsehash parameters.
-func (h *Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
+func (h Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
 	var err error
 
 	// The following functions do nothing if err != nil
