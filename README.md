@@ -1,4 +1,4 @@
-# sparsehash [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/oliverpool/sparsehash)
+# sparsehash [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/oliverpool/sparsehash)
 
 sparsehash is a fast, constant-time hashing library for Go. It uses sampling to calculate hashes quickly, regardless of file size.
 
