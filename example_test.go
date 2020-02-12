@@ -19,5 +19,5 @@ func Example() {
 		panic(err)
 	}
 	fmt.Printf("%016x\n", hash)
-	// Output: 1acd63930005d0b6ee5ebc8a3f6483f2
+	// Output: 15cd63930005d0b6ee5ebc8a3f6483f2
 }

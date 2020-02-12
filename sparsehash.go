@@ -6,16 +6,10 @@ package sparsehash
 
 import (
 	"bytes"
-	"encoding/binary"
 	"hash"
 	"io"
 	"os"
 )
-
-// HashSize is the size of byte array produced by the Sum function
-const HashSize = 16
-
-var emptyArray = [HashSize]byte{}
 
 // Hasher respresents a sparse hasher
 type Hasher struct {
@@ -39,55 +33,44 @@ func New(subhasher func() hash.Hash) Hasher {
 }
 
 // SumBytes hashes a byte slice using the sparsehash parameters.
-func (h Hasher) SumBytes(data []byte) ([HashSize]byte, error) {
+func (h Hasher) SumBytes(data []byte) ([]byte, error) {
 	sr := io.NewSectionReader(bytes.NewReader(data), 0, int64(len(data)))
 
 	return h.Sum(sr)
 }
 
 // SumFile hashes a file sparsely
-func (h Hasher) SumFile(filename string) ([HashSize]byte, error) {
+func (h Hasher) SumFile(filename string) ([]byte, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return emptyArray, err
+		return nil, err
 	}
 	defer f.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		return emptyArray, err
+		return nil, err
 	}
 	sr := io.NewSectionReader(f, 0, fi.Size())
 	return h.Sum(sr)
 }
 
 // Sum hashes a SectionReader using the sparsehash parameters.
-func (h Hasher) Sum(f *io.SectionReader) ([HashSize]byte, error) {
-	var hasher hash.Hash
-	var err error
-
+func (h Hasher) Sum(f *io.SectionReader) ([]byte, error) {
 	if f.Size() < h.SizeThreshold || h.SampleSize < 1 {
-		hasher, err = h.hashAll(f)
-	} else {
-		hasher, err = h.hashSamples(f)
+		return h.hashAll(f)
 	}
-	hash := make([]byte, 0, HashSize)
-	hash = hasher.Sum(hash)
 
-	binary.PutUvarint(hash, uint64(f.Size()))
-
-	var result [HashSize]byte
-	copy(result[:], hash)
-	return result, err
+	return h.hashSamples(f)
 }
 
-func (h Hasher) hashAll(f *io.SectionReader) (hash.Hash, error) {
+func (h Hasher) hashAll(f *io.SectionReader) ([]byte, error) {
 	hasher := h.SubHasher()
 	_, err := io.Copy(hasher, f)
-	return hasher, err
+	return hasher.Sum(nil), err
 }
 
-func (h Hasher) hashSamples(f *io.SectionReader) (hash.Hash, error) {
+func (h Hasher) hashSamples(f *io.SectionReader) ([]byte, error) {
 	var err error
 
 	// The following functions do nothing if err != nil
@@ -115,6 +98,7 @@ func (h Hasher) hashSamples(f *io.SectionReader) (hash.Hash, error) {
 		_, err = f.Seek(offset, whence)
 	}
 
+	// actual work
 	buffer := make([]byte, h.SampleSize)
 	fRead(buffer)
 	hWrite(buffer)
@@ -125,5 +109,5 @@ func (h Hasher) hashSamples(f *io.SectionReader) (hash.Hash, error) {
 	fRead(buffer)
 	hWrite(buffer)
 
-	return hasher, err
+	return hasher.Sum(nil), err
 }

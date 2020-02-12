@@ -37,6 +37,7 @@ func TestSpec(t *testing.T) {
 			SizeThreshold: test.t,
 		}
 		s, _ := i.SumBytes(M(test.n))
+		addSize(s, test.n)
 		hashStr = fmt.Sprintf("%x", s)
 		is.Equal(hashStr, test.hash)
 	}

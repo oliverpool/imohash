@@ -1,12 +1,13 @@
 # sparsehash
 
-sparsehash is a fast, constant-time hashing library for Go. It uses file size and
-sampling to calculate hashes quickly, regardless of file size.
+sparsehash is a fast, constant-time hashing library for Go. It uses sampling to calculate hashes quickly, regardless of file size.
 
 [sparsehash](https://github.com/oliverpool/sparsehash/blob/master/cmd/sparsehash/main.go) is
 a sample application to hash files from the command line, similar to md5sum.
 
 sparsehash is forked from [imohash](https://github.com/kalafut/imohash).
+
+**The file size is not integrated in the hash** (you should compare it yourself).
 
 ## Installation
 
@@ -30,7 +31,7 @@ Because sparsehash only reads a small portion of a file's data, it is not suitab
 for:
 
 - file verification or integrity monitoring
-- cases where fixed-size files are manipulated
+- cases where specific bits are manipulated in a file
 - anything cryptographic
 
 ## Design
@@ -38,24 +39,8 @@ for:
 (Note: a more precise description is provided in the
 [algorithm description](https://github.com/oliverpool/sparsehash/blob/master/algorithm.md).)
 
-sparsehash works by hashing small chunks of data from the beginning, middle and
-end of a file. It also incorporates the file size into the final 128-bit hash.
-This approach is based on a few assumptions which will vary by application.
-First, file size alone *tends*<sup>1</sup> to be a pretty good differentiator, especially
-as file size increases. And when people do things to files (such as editing
-photos), size tends to change. So size is used directly in the hash, and **any
-files that have different sizes will have different hashes**.
-
-Size is an effective differentiator but isn't sufficient. It can show that two
-files aren't the same, but to increase confidence that like-size files are the
-same, a few segments are hashed using
-[murmur3](https://en.wikipedia.org/wiki/MurmurHash), a fast and effective
-hashing algorithm.  By default, 16K chunks from the beginning, middle and end of
-the file are used.  The ends of files often contain metadata which is more prone
-to changing without affecting file size. The middle is for good measure. The
-sample size can be changed for your application.
-
-<sup>1</sup> Try `du -a . | sort -nr | less` on a sample of your files to check this assertion.
+sparsehash works by hashing fiexed-size chunks of data from the beginning, middle and
+end of a file using a provided hasher.
 
 ### Small file exemption
 Small files are more likely to collide on size than large ones. They're also
