@@ -2,7 +2,7 @@
 
 sparsehash is a fast, constant-time hashing library for Go. It uses sampling to calculate hashes quickly, regardless of file size.
 
-It works by hashing fiexed-size chunks of data from the beginning, middle and end of a file using a provided hasher.
+It works by hashing fixed-size chunks of data from the beginning, middle and end of a file using a provided hasher.
 
 [sparsehash](https://github.com/oliverpool/sparsehash/blob/master/cmd/sparsehash/main.go) is
 a sample application to hash files from the command line, similar to md5sum.
